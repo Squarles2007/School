@@ -24,27 +24,22 @@
 
 
 #define NUM_EVENTS_PER_DEVICE 100
-
+//keeps track of the total response time and turn around time for the duration 
+//of the program then once the program is finish bookkeepsing will calculate
+//the avg by dividing by avgCount which is incr every time an event is served
+double totalResponseTime = 0;      
+double totalTurnAroundTime = 0;
+double avgCounter = 0;
 
 /*****************************************************************************\
 *                            Global data structures                           *
 \*****************************************************************************/
 
-typedef struct deviceEvents {
-    double responseTimes[NUM_EVENTS_PER_DEVICE];
-    double turnAroundTimes[NUM_EVENTS_PER_DEVICE];
-    double hasProcessed[NUM_EVENTS_PER_DEVICE];   //boolean 1 or 0
-    double averageResponseTime;
-    double averageTurnAroundTime;
-    int missedEvents;
-    int seenEvents;
-} DeviceEvents;
 
 
 /*****************************************************************************\
 *                                  Global data                                *
 \*****************************************************************************/
-DeviceEvents deviceEventsInfo[MAX_NUMBER_DEVICES];
 
 
 
@@ -89,7 +84,7 @@ void Control(void){
   int i = 0;
   Status LastStatus = 0;
   Event event;
-
+  double eventStartT, eventResponseT,eventTurnAroundT; // time markers for each event
   //Another copy of Flags
   Status SnapShot = 0;
 
@@ -102,7 +97,8 @@ void Control(void){
       		LastStatus = Flags;
 		SnapShot = Flags;
       		printf("\n >>>>>>>>>  >>> When: %10.3f  Flags = %d\n", Now(),Flags);
-		
+		//Set Flags back to zero
+		Flags = 0;
 
 		//This will be the amount of binary ones we find in "Flags"
 		int c = 0;
@@ -132,9 +128,17 @@ void Control(void){
 			if(b & 1)
 			{
 				//Use Biaz's method to display this events content
-				DisplayEvent('a', &BufferLastEvent[y]);
-				Server(&BufferLastEvent[y]);
+				event = BufferLastEvent[y];
+				eventStartT = event.When;
+				
 
+				DisplayEvent('a', &BufferLastEvent[y]);
+				
+				totalResponseTime = totalResponseTime +(Now() - eventStartT);   //take time before Event is serviced then add to totalResonse
+				Server(&BufferLastEvent[y]);
+				totalTurnAroundTime = totalTurnAroundTime + ( Now() - eventStartT); //take time after event is serviced then add to totalTurnarround
+				avgCounter++;
+				
 				//Decrement the amount of ones we found
 				c--;
 			}
@@ -150,33 +154,10 @@ void Control(void){
 			}
 
 		}
-		printf("FLAGS BEFORE RESET: %d",Flags);
-		//Set Flags back to zero
-		Flags = 0;
+		//printf("FLAGS BEFORE RESET: %d",Flags);
+		
 	
     	}
-
-   
-   // This while-loop will check the devices linearly by scanning each "BufferLastEvent[]" index sequentially. 
-   // the OR statement "deviceEventsInfo[i].hasProcessed[BufferLastEvent[i].EventID]" checks to see if the current device has
-   // processed that event.
-   // So if Event.When == 0 fails then it will check if the EventID for that device has been processed if it 
-   // has enter the loop and incr i ; if not exit loop
-   //while(BufferLastEvent[i].When == 0 || deviceEventsInfo[i].hasProcessed[BufferLastEvent[i].EventID]){
-   //i++;
-	//i = i % MAX_NUMBER_DEVICES;  //keeps you from going out of bounds
-   //}
-	
-   //event = BufferLastEvent[i];
-   
-   
-   //DisplayEvent('a', &event);
-   
-
-   //Server(&event);
-
-   //This sets our boolean flag for hasProcessed to true. 
-   //deviceEventsInfo[event.DeviceID].hasProcessed[event.EventID] = 1;
   } //end while(1)
 }
 
@@ -188,7 +169,11 @@ void Control(void){
 *           not yet processed (Server() function not yet called)        *
 \***********************************************************************/
 void BookKeeping(void){
+	double avgResponseTime = totalResponseTime / avgCounter;
+	double avgTurnAroundTime = totalTurnAroundTime / avgCounter;
   printf("\n >>>>>> Done\n");
+  printf("Average Response Time: %d\n", avgResponseTime);
+  printf("Average TurnAround Time: %d\n", avgTurnAroundTime);
 }
 
 

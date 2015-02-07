@@ -156,27 +156,6 @@ void Control(void){
 	
     	}
 
-   
-   // This while-loop will check the devices linearly by scanning each "BufferLastEvent[]" index sequentially. 
-   // the OR statement "deviceEventsInfo[i].hasProcessed[BufferLastEvent[i].EventID]" checks to see if the current device has
-   // processed that event.
-   // So if Event.When == 0 fails then it will check if the EventID for that device has been processed if it 
-   // has enter the loop and incr i ; if not exit loop
-   //while(BufferLastEvent[i].When == 0 || deviceEventsInfo[i].hasProcessed[BufferLastEvent[i].EventID]){
-   //i++;
-	//i = i % MAX_NUMBER_DEVICES;  //keeps you from going out of bounds
-   //}
-	
-   //event = BufferLastEvent[i];
-   
-   
-   //DisplayEvent('a', &event);
-   
-
-   //Server(&event);
-
-   //This sets our boolean flag for hasProcessed to true. 
-   //deviceEventsInfo[event.DeviceID].hasProcessed[event.EventID] = 1;
   } //end while(1)
 }
 

@@ -25,7 +25,7 @@
 
 #define NUM_EVENTS_PER_DEVICE 100
 //keeps track of the total response time and turn around time for the duration 
-//of the program then once the program is finish bookkeepsing will calculate
+//of the program then once the program is finish bookkeeping will calculate
 //the avg by dividing by avgCount which is incr every time an event is served
 double totalResponseTime = 0;      
 double totalTurnAroundTime = 0;
@@ -83,22 +83,20 @@ int main (int argc, char **argv) {
 void Control(void){
   int i = 0;
   Status LastStatus = 0;
-  Event event;
-  double eventStartT, eventResponseT,eventTurnAroundT; // time markers for each event
+  double eventStartT=0; // time markers for each event
   //Another copy of Flags
   Status SnapShot = 0;
 
   while (1) {
     
-   // printf("%10.3f   Flags = %d - \n ", Now(), Flags);
+   
     //sleep(1); // Just to slow down to have time to see Flags
     if (Flags != LastStatus)	
 	{
       		LastStatus = Flags;
 		SnapShot = Flags;
       		printf("\n >>>>>>>>>  >>> When: %10.3f  Flags = %d\n", Now(),Flags);
-		//Set Flags back to zero
-		Flags = 0;
+		
 
 		//This will be the amount of binary ones we find in "Flags"
 		int c = 0;
@@ -128,15 +126,14 @@ void Control(void){
 			if(b & 1)
 			{
 				//Use Biaz's method to display this events content
-				event = BufferLastEvent[y];
-				eventStartT = event.When;
+				eventStartT = BufferLastEvent[y].When;
 				
-
+				
 				DisplayEvent('a', &BufferLastEvent[y]);
 				
-				totalResponseTime = totalResponseTime +(Now() - eventStartT);   //take time before Event is serviced then add to totalResonse
+				totalResponseTime += Now() - eventStartT;   //take time before Event is serviced then add to totalResonse
 				Server(&BufferLastEvent[y]);
-				totalTurnAroundTime = totalTurnAroundTime + ( Now() - eventStartT); //take time after event is serviced then add to totalTurnarround
+				totalTurnAroundTime += Now() - eventStartT; //take time after event is serviced then add to totalTurnarround
 				avgCounter++;
 				
 				//Decrement the amount of ones we found
@@ -155,17 +152,10 @@ void Control(void){
 
 		}
 		//printf("FLAGS BEFORE RESET: %d",Flags);
-<<<<<<< HEAD
-		
-	
-    	}
-=======
 		//Set Flags back to zero
 		Flags = 0;
 	
     	}
-
->>>>>>> origin/master
   } //end while(1)
 }
 
@@ -180,8 +170,8 @@ void BookKeeping(void){
 	double avgResponseTime = totalResponseTime / avgCounter;
 	double avgTurnAroundTime = totalTurnAroundTime / avgCounter;
   printf("\n >>>>>> Done\n");
-  printf("Average Response Time: %d\n", avgResponseTime);
-  printf("Average TurnAround Time: %d\n", avgTurnAroundTime);
+  printf(" >>>>>>Average Response Time: %10.3f\n", avgResponseTime);
+  printf(" >>>>>>Average TurnAround Time: %10.3f\n", avgTurnAroundTime);
 }
 
 

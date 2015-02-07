@@ -150,7 +150,7 @@ void Control(void){
 			}
 
 		}
-		printf("FLAGS BEFORE RESET: %d",Flags);
+		//printf("FLAGS BEFORE RESET: %d",Flags);
 		//Set Flags back to zero
 		Flags = 0;
 	

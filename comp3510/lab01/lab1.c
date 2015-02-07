@@ -155,9 +155,17 @@ void Control(void){
 
 		}
 		//printf("FLAGS BEFORE RESET: %d",Flags);
+<<<<<<< HEAD
 		
 	
     	}
+=======
+		//Set Flags back to zero
+		Flags = 0;
+	
+    	}
+
+>>>>>>> origin/master
   } //end while(1)
 }
 

@@ -3,6 +3,7 @@
 * Laboratory Exercises COMP 3510                                              *
 * Author: Saad Biaz                                                           *
 * Date  : January 18, 2014                                                    *
+* Group: Alex Aguirre and Kullen Williams				      *
 \*****************************************************************************/
 
 /*****************************************************************************\
@@ -157,10 +158,10 @@ void Control(void){
 		}
 
 		//printf("FLAGS BEFORE RESET: %d",Flags);
-		//Set Flags back to zero
+		//Turn off(0) flags that were on at the beginning of the if statement
+		//and leave flags that were turned on during processing on(1).
 		Flags = Flags ^ xOrStatus;
-		//Flags = 0;
-		//Flags = Flags;
+		
 	
     	} // if Flag != 0
   } //end while(1)

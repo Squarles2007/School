@@ -86,16 +86,19 @@ void Control(void){
   double eventStartT=0; // time markers for each event
   //Another copy of Flags
   Status SnapShot = 0;
+  Status xOrStatus = 0;
+  Event event;
 
   while (1) {
     
    
     //sleep(1); // Just to slow down to have time to see Flags
-    if (Flags != LastStatus)	
+    if (Flags != 0)	
 	{
       		LastStatus = Flags;
 		SnapShot = Flags;
-      		printf("\n >>>>>>>>>  >>> When: %10.3f  Flags = %d\n", Now(),Flags);
+		xOrStatus = LastStatus;
+      		printf("\n\nWhen: %10.3f  Flags = %d\n", Now(),Flags);
 		
 
 		//This will be the amount of binary ones we find in "Flags"
@@ -126,13 +129,14 @@ void Control(void){
 			if(b & 1)
 			{
 				//Use Biaz's method to display this events content
-				eventStartT = BufferLastEvent[y].When;
+				event = BufferLastEvent[y];
+				eventStartT = event.When;
 				
 				
-				DisplayEvent('a', &BufferLastEvent[y]);
+				DisplayEvent('a', &event);
 				
 				totalResponseTime += Now() - eventStartT;   //take time before Event is serviced then add to totalResonse
-				Server(&BufferLastEvent[y]);
+				Server(&event);
 				totalTurnAroundTime += Now() - eventStartT; //take time after event is serviced then add to totalTurnarround
 				avgCounter++;
 				
@@ -151,11 +155,14 @@ void Control(void){
 			}
 
 		}
+
 		//printf("FLAGS BEFORE RESET: %d",Flags);
 		//Set Flags back to zero
-		Flags = 0;
+		Flags = Flags ^ xOrStatus;
+		//Flags = 0;
+		//Flags = Flags;
 	
-    	}
+    	} // if Flag != 0
   } //end while(1)
 }
 
@@ -169,9 +176,9 @@ void Control(void){
 void BookKeeping(void){
 	double avgResponseTime = totalResponseTime / avgCounter;
 	double avgTurnAroundTime = totalTurnAroundTime / avgCounter;
-  printf("\n >>>>>> Done\n");
-  printf(" >>>>>>Average Response Time: %10.3f\n", avgResponseTime);
-  printf(" >>>>>>Average TurnAround Time: %10.3f\n", avgTurnAroundTime);
+  printf("\nBookKeeping is Done\n");
+  printf("Average Response Time: %10.3f\n", avgResponseTime);
+  printf("Average TurnAround Time: %10.3f\n", avgTurnAroundTime);
 }
 
 

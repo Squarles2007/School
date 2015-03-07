@@ -40,7 +40,7 @@
 \*****************************************************************************/
 Event PriorityEventArray[100 * 32];
 int pIndex = -1;
-double RT[MAX_NUMBER_DEVICES] = {0,0,0,0,0,0,0,0};
+double RT[MAX_NUMBER_DEVICES] = {0,0,0,0,0,0,0,0};  //intialized the first couple of cells
 double TT[MAX_NUMBER_DEVICES] = {0,0,0,0,0,0,0,0};
 int EventCount[MAX_NUMBER_DEVICES] = {0,0,0,0,0};
 
@@ -84,11 +84,10 @@ int main (int argc, char **argv) {
 void Control(void){
   Event event;
   while (1){
-	if(pIndex > -1){
-		event = PriorityEventArray[pIndex];
+	if(pIndex > -1){ //if pIndex is greater than -1 then an event was added to the Priority Array
+		event = PriorityEventArray[pIndex]; //set event incase an interrupt happens and changes pIndex
 		pIndex--;
 		Server(&event);
-		
 		TT[event.DeviceID] += Now() - event.When;
 		
 		//incr number of events process per device
@@ -109,8 +108,8 @@ void Control(void){
 void InterruptRoutineHandlerDevice(void){
  	printf("An event occured at %f  Flags = %d \n", Now(), Flags);
 	// Put Here the most urgent steps that cannot wait
-	Status CurrentStatus = Flags;
-	Flags = 0;
+	Status CurrentStatus = Flags;  //snapShot of Flag status
+	Flags = 0; //rest Flags
 	Event event;
 	int position = 0;	
 
@@ -118,9 +117,9 @@ void InterruptRoutineHandlerDevice(void){
 				
 		if(CurrentStatus & 1){
 			event = BufferLastEvent[position];
-			RT[event.DeviceID] += Now() - event.When;
+			RT[event.DeviceID] += Now() - event.When; //take response time
 			DisplayEvent('x', &event);
-			insert(event);
+			insert(event); //insert Event in Priority Order
 			//pIndex++;
 			//PriorityEventArray[pIndex] = event;
 		
@@ -144,15 +143,19 @@ void BookKeeping(void){
   // 1) the percentage of missed events, 2) the average response time, and 
   // 3) the average turnaround time.
   // Print the overall averages of the three metrics 1-3 above
+  double TotalAvgRT = 0;
+  double TotalAvgTT = 0;
   int i = 0;
   while(EventCount[i] > 0){
 	printf("\nDevice %d processed %d events\n",i,EventCount[i]);
 	printf("	AVG Response Time %10.3f\n", RT[i]/100);
-	printf("	AVG Turnaroun Time %10.3f\n", TT[i]/100);
-		
+	printf("	AVG Turnaround Time %10.3f\n", TT[i]/100);
+	TotalAvgRT +=RT[i]/100;
+	TotalAvgTT +=TT[i]/100;
 	i++;
   }
-
+  printf("	Total AVG Turnaround Time %10.3f\n", TotalAvgRT/(i));
+  printf("	Total AVG Response Time %10.3f\n", TotalAvgTT/(i));
   printf("DONE\n");
 }
 

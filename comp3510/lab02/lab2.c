@@ -38,8 +38,8 @@
 /*****************************************************************************\
 *                                  Global data                                *
 \*****************************************************************************/
-Event PriorityEveryArray[MAX_EVENT_ID * MAX_NUMBER_DEVICES];
-int pIndex = 0;
+Event PriorityEventArray[100 * 32] = {NULL};
+int pIndex = -1;
 double RT[MAX_NUMBER_DEVICES];
 double TT[MAX_NUMBER_DEVICES];
 
@@ -51,6 +51,7 @@ double TT[MAX_NUMBER_DEVICES];
 void Control(void);
 void InterruptRoutineHandlerDevice(void);
 void BookKeeping();
+void printArray();
 
 
 /*****************************************************************************\
@@ -79,11 +80,13 @@ int main (int argc, char **argv) {
  * Function: Monitor Devices and process events (written by students)    *
  \***********************************************************************/
 void Control(void){
-
+	
   while (1){
-	if(PriorityEventArray[0] != null){
+	if(pIndex < -1){
 		
-		
+		printf("SERVER----------------------------------");
+		Server(&PriorityEventArray[pIndex]);
+		pIndex--;
 
 
 	}
@@ -113,17 +116,13 @@ void InterruptRoutineHandlerDevice(void){
 		if(CurrentStatus & 1){
 			RT[event.DeviceID] += Now() - event.When;
 			DisplayEvent('x', &event);
-			//insert(event);
-			
-
+			insert(event);
 		} // end if
 
 		position++;
 		CurrentStatus = CurrentStatus >> 1;
 
 	} //end While CurrentStatus
-
-	
 }
 
 
@@ -146,31 +145,30 @@ priority order.
 
 \***********************************************************************/
 void insert(Event event){
-	
+	pIndex++;	
+	printf("INSERT P-INDEX = %d\n",pIndex);
 	if(pIndex == 0){
-		PriorityEveryArray[0] = event;
+		PriorityEventArray[0] = event;
 	}
 	else {
-		PriorityEveryArray[pIndex] = event;
+		PriorityEventArray[pIndex] = event;
 		int key;
 		int j;
 		Event keyEvent;
 		int i = 1;
 		for( i ; i < pIndex; i++){
-			keyEvent = PriorityEveryArray[i];
-			key = PriorityEveryArray[i].priority;
+			keyEvent = PriorityEventArray[i];
+			key = PriorityEventArray[i].priority;
 			j = i-1;
-			while(j >= 0 && key > PriorityEveryArray[j].priority)
+			while(j >= 0 && key > PriorityEventArray[j].priority)
 			{
-				PriorityEveryArray[j-1] = PriorityEveryArray[j];
+				PriorityEventArray[j-1] = PriorityEventArray[j];
 				j--;
 			}
-			PriorityEveryArray[j+1] = keyEvent;
+			PriorityEventArray[j+1] = keyEvent;
 		}
 
 	} //end else
-	pIndex++;
-} //end inset
-
-
+		
+} //end insert
 

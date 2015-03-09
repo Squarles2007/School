@@ -31,18 +31,22 @@
 /*****************************************************************************\
 *                            Global data structures                           *
 \*****************************************************************************/
-
+typedef struct deviceQueue {
+	int head, tail;
+	Event EventArray[MAX_NUMBER_DEVICES*MAX_EVENT_ID];
+} Queue;
 
 
 
 /*****************************************************************************\
 *                                  Global data                                *
 \*****************************************************************************/
-Event PriorityEventArray[100 * 32];
+//Event PriorityEventArray[100 * 32];
 int pIndex = -1;
-double RT[MAX_NUMBER_DEVICES] = {0,0,0,0,0,0,0,0};
-double TT[MAX_NUMBER_DEVICES] = {0,0,0,0,0,0,0,0};
-int EventCount[MAX_NUMBER_DEVICES] = {0,0,0,0,0};
+double RT[MAX_NUMBER_DEVICES];
+double TT[MAX_NUMBER_DEVICES];
+int EventCount[MAX_NUMBER_DEVICES];
+Queue eventQueue;
 
 
 /*****************************************************************************\
@@ -53,6 +57,8 @@ void Control(void);
 void InterruptRoutineHandlerDevice(void);
 void BookKeeping();
 void insert(Event event);
+void enqueue(Event event);
+Event dequeue(void);
 
 
 
@@ -82,17 +88,19 @@ int main (int argc, char **argv) {
  * Function: Monitor Devices and process events (written by students)    *
  \***********************************************************************/
 void Control(void){
+  eventQueue.head = 0;
+  eventQueue.tail = 0;
   Event event;
   while (1){
-	if(pIndex > -1){
-		event = PriorityEventArray[pIndex];
-		pIndex--;
+	
+	if(eventQueue.head != eventQueue.tail){
+		printf("head = %d  tail = %d\n", eventQueue.head , eventQueue.tail);
+		event = dequeue();
 		Server(&event);
+		//pIndex--;
+		
 		
 		TT[event.DeviceID] += Now() - event.When;
-		
-		//incr number of events process per device
-		EventCount[event.DeviceID] = EventCount[event.DeviceID] + 1;
 	}
 
   } //end while(1)
@@ -115,15 +123,18 @@ void InterruptRoutineHandlerDevice(void){
 	int position = 0;	
 
 	while(CurrentStatus){
-				
 		if(CurrentStatus & 1){
 			event = BufferLastEvent[position];
+			enqueue(event);
 			RT[event.DeviceID] += Now() - event.When;
 			DisplayEvent('x', &event);
-			insert(event);
-			//pIndex++;
+			
+			pIndex++;
 			//PriorityEventArray[pIndex] = event;
-		
+			
+			//incr number of events process per device;
+			EventCount[event.DeviceID] = EventCount[event.DeviceID] + 1;
+
 		} // end if
 
 		position++;
@@ -145,14 +156,23 @@ void BookKeeping(void){
   // 3) the average turnaround time.
   // Print the overall averages of the three metrics 1-3 above
   int i = 0;
+  double avgMissed = 0;
+  double avgRT = 0;
+  double avgTT = 0;
   while(EventCount[i] > 0){
-	printf("\nDevice %d processed %d events\n",i,EventCount[i]);
-	printf("	AVG Response Time %10.3f\n", RT[i]/100);
+	printf("\nDevice %d processed %d events out of 100\n",i,EventCount[i]);
+	
+       printf("	AVG Response Time %10.3f\n", RT[i]/100);
 	printf("	AVG Turnaroun Time %10.3f\n", TT[i]/100);
-		
+	avgRT += RT[i];
+       avgTT += TT[i];
+       avgMissed += (100 - EventCount[i]);
 	i++;
   }
-
+  avgMissed = 100-((double)eventQueue.head/eventQueue.tail * 100);
+  printf("\n\nAVG missed events %10.3f\n", avgMissed);
+  printf("AVG total response time %10.3f\n", avgRT/(i * 100));
+  printf("AVG total turnaround time %10.3f\n", avgTT/(i * 100));
   printf("DONE\n");
 }
 
@@ -162,30 +182,42 @@ priority order.
 Lowest Priority number has highest priority
 
 \***********************************************************************/
-void insert(Event event){
+
+//NOT USED FOR LAB02
+// void insert(Event event){
 	
-	pIndex++;	
-	//printf("INSERT P-INDEX = %d\n",pIndex);
-	if(pIndex == 0){
-		PriorityEventArray[0] = event;
-	}
-	else {
+// 	pIndex++;	
+// 	//printf("INSERT P-INDEX = %d\n",pIndex);
+// 	if(pIndex == 0){
+// 		PriorityEventArray[0] = event;
+// 	}
+// 	else {
 		
-		int key;
-		int j;
-		Event keyEvent;
-		keyEvent = event;
+// 		int key;
+// 		int j;
+// 		Event keyEvent;
+// 		keyEvent = event;
 
-		j = pIndex-1;
-		key = PriorityEventArray[pIndex].priority;
+// 		j = pIndex-1;
+// 		key = PriorityEventArray[pIndex].priority;
 	
-		while(key > PriorityEventArray[j].priority && j >= 0){
-			PriorityEventArray[j-1] = PriorityEventArray[j];
-			j--;
-		}
-		PriorityEventArray[j+1] = keyEvent;
+// 		while(key > PriorityEventArray[j].priority && j >= 0){
+// 			PriorityEventArray[j-1] = PriorityEventArray[j];
+// 			j--;
+// 		}
+// 		PriorityEventArray[j+1] = keyEvent;
 
-	} //end else
+// 	} //end else
 		
-} //end insert
+// } //end insert
 
+void enqueue(Event event){
+	eventQueue.EventArray[eventQueue.tail] = event;
+	eventQueue.tail++;
+}
+
+Event dequeue(void){
+	Event event = eventQueue.EventArray[eventQueue.head];
+	eventQueue.head++;
+	return event;
+}

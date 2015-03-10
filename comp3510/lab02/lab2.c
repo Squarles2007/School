@@ -17,16 +17,10 @@
 *                             Global data types                               *
 \*****************************************************************************/
 
-
-
 /*****************************************************************************\
 *                             Global definitions                              *
 \*****************************************************************************/
 #define MAX_EVENT_ID 100
-
-
-
-
 
 /*****************************************************************************\
 *                            Global data structures                           *
@@ -36,8 +30,6 @@ typedef struct deviceQueue {
 	Event EventArray[MAX_NUMBER_DEVICES*MAX_EVENT_ID];
 } Queue;
 
-
-
 /*****************************************************************************\
 *                                  Global data                                *
 \*****************************************************************************/
@@ -46,20 +38,15 @@ double TT[MAX_NUMBER_DEVICES];
 double EventCount[MAX_NUMBER_DEVICES] = {0};
 Queue eventQueue;
 
-
-
 /*****************************************************************************\
 *                               Function prototypes                           *
 \*****************************************************************************/
-
 void Control(void);
 void InterruptRoutineHandlerDevice(void);
 void BookKeeping();
 //void insert(Event event);  // this will be used if you wanted to use function queue
 void enqueue(Event event);
 Event dequeue(void);
-
-
 
 /*****************************************************************************\
 * function: main()                                                            *
@@ -102,7 +89,6 @@ void Control(void){
 
 } //end control 
 
-
 /***********************************************************************\
 * Input : None                                                          *
 * Output: None                                                          *
@@ -132,7 +118,6 @@ void InterruptRoutineHandlerDevice(void){
 
 	} //end While CurrentStatus
 }
-
 
 /***********************************************************************\
 * Input : None                                                          *
@@ -165,7 +150,7 @@ void BookKeeping(void){
   	
   avgMissed = (avgMissed/(i *100) * 100);
   printf("\n\nAVG total missed events:	%10.3f\n", avgMissed);
-  printf("AVG total response time:		%10.3f\n", avgRT/(i * 100));
+  printf("AVG total response time:	%10.3f\n", avgRT/(i * 100));
   printf("AVG total turnaround time:	%10.3f\n", avgTT/(i * 100));
 }
 	

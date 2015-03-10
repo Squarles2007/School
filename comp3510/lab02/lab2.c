@@ -41,11 +41,9 @@ typedef struct deviceQueue {
 /*****************************************************************************\
 *                                  Global data                                *
 \*****************************************************************************/
-//Event PriorityEventArray[100 * 32];
-int pIndex = -1;
 double RT[MAX_NUMBER_DEVICES];
 double TT[MAX_NUMBER_DEVICES];
-int EventCount[MAX_NUMBER_DEVICES];
+double EventCount[MAX_NUMBER_DEVICES] = {0};
 Queue eventQueue;
 
 
@@ -57,7 +55,7 @@ Queue eventQueue;
 void Control(void);
 void InterruptRoutineHandlerDevice(void);
 void BookKeeping();
-void insert(Event event);
+//void insert(Event event);  // this will be used if you wanted to use function queue
 void enqueue(Event event);
 Event dequeue(void);
 
@@ -92,17 +90,14 @@ void Control(void){
   eventQueue.head = 0;
   eventQueue.tail = 0;
   Event event;
-  while (1){
-	
-	if(eventQueue.head != eventQueue.tail){
-		printf("head = %d  tail = %d\n", eventQueue.head , eventQueue.tail);
+  while (1)
+  {	
+	if(eventQueue.head != eventQueue.tail)
+	{
 		event = dequeue();
 		Server(&event);
-		//pIndex--;
-		
 		TT[event.DeviceID] += Now() - event.When;
 	}
-
   } //end while(1)
 
 } //end control 
@@ -128,12 +123,6 @@ void InterruptRoutineHandlerDevice(void){
 			enqueue(event);
 			RT[event.DeviceID] += Now() - event.When;
 			DisplayEvent('x', &event);
-			
-			pIndex++;
-
-			//PriorityEventArray[pIndex] = event;
-			
-			//incr number of events process per device;
 			EventCount[event.DeviceID] = EventCount[event.DeviceID] + 1;
 
 		} // end if
@@ -160,26 +149,26 @@ void BookKeeping(void){
   double TotalAvgTT = 0;
   int i = 0;
   double avgMissed = 0;
+  double missed = 0;
   double avgRT = 0;
   double avgTT = 0;
   while(EventCount[i] > 0){
-	printf("\nDevice %d processed %d events out of 100\n",i,EventCount[i]);
-	
-       printf("	AVG Response Time %10.3f\n", RT[i]/100);
-	printf("	AVG Turnaroun Time %10.3f\n", TT[i]/100);
+	printf("\nDevice %d processed %10.f events out of 100\n",i,EventCount[i]);
+    	printf("	Device %d missed percentage:	%10.f percent\n", i, (100 - EventCount[i]));
+    	printf("	AVG Response Time:				%10.3f\n", RT[i]/100);
+	printf("	AVG Turnaroun Time:				%10.3f\n", TT[i]/100); 
 	avgRT += RT[i];
        avgTT += TT[i];
        avgMissed += (100 - EventCount[i]);
 	i++;
   }
-  avgMissed = 100-((double)eventQueue.head/eventQueue.tail * 100);
-  printf("\n\nAVG missed events %10.3f\n", avgMissed);
-  printf("AVG total response time %10.3f\n", avgRT/(i * 100));
-  printf("AVG total turnaround time %10.3f\n", avgTT/(i * 100));
-
-  printf("DONE\n");
+  	
+  avgMissed = (avgMissed/(i *100) * 100);
+  printf("\n\nAVG total missed events:	%10.3f\n", avgMissed);
+  printf("AVG total response time:		%10.3f\n", avgRT/(i * 100));
+  printf("AVG total turnaround time:	%10.3f\n", avgTT/(i * 100));
 }
-
+	
 /***********************************************************************\
 INSERT performs insertion sort on PriotyEventArray to place events in
 priority order.

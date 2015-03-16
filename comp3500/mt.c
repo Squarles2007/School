@@ -47,7 +47,7 @@ int main()
 	}
     }
 	
-
+    gettimeofday(&before, NULL);
     for(m = 0 ; m < 10 ; m++) {
 	pthread_create(&thread1,NULL,multiplyMatrix,NULL);
 	pthread_create(&thread2,NULL,output,NULL);

@@ -11,4 +11,6 @@ all:
 	./mt
 
 	ls -la
+	gcc -o delete deleteTestFiles.c
+	./delete
 	

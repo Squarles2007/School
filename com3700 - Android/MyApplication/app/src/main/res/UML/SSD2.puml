@@ -1,0 +1,9 @@
+
+@startuml
+'add word to Haiku
+USER -> APP: Remove Last Word
+APP -> Haiku: Removes last word that was add
+Haiku -> APP:update
+APP -> USER : READY
+
+@enduml

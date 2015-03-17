@@ -1,0 +1,33 @@
+@startuml
+
+
+Class Haiku
+interface APP
+Class User
+
+Haiku "1"*-down- "3" Line
+Line "1"*--"5,7" Syllables
+Line  "1" *-- "1..*"Words
+Words "1" -right- "1..*" Syllables
+Words <|-- adjective
+Words <|-- noun
+Words <|-- verb
+Words <|-- other
+User -down- APP
+APP - Haiku
+APP "1" *-- "*" fragments
+APP "1" *-- "*" Buttons
+APP "1" *-- "1" Spinner
+APP "1" *-- "*" Layouts
+'class ArrayList {'
+'Object[] elementData'
+'size()
+'}
+
+'enum TimeUnit {
+'DAYS
+'HOURS
+'MINUTES
+'}
+
+@enduml

@@ -1,0 +1,9 @@
+@startuml
+'add word to Haiku
+USER -> APP: Select Word Type
+APP -> USER: Show Available Words
+USER -> APP: Select Word
+APP -> Haiku:Add word
+APP -> USER: show word was added
+
+@enduml

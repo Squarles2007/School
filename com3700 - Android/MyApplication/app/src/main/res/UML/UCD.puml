@@ -1,0 +1,17 @@
+@startuml
+left to right direction
+actor User
+rectangle Haiku {
+
+User --> (Select Word Type)
+
+User -> (Add Word)
+
+User -> (Delete Last Word)
+User -> (Select Word)
+User -> (Display Haiku)
+User -> (Start Over)
+}
+
+
+@enduml

@@ -46,14 +46,14 @@ int main()
 	    B[i][j] = random()/100.0;
 	}
     }
-	
-    gettimeofday(&before, NULL);
-    for(m = 0 ; m < 10 ; m++) {
 	pthread_create(&thread1,NULL,multiplyMatrix,NULL);
 	pthread_create(&thread2,NULL,output,NULL);
+    gettimeofday(&before, NULL);
+    for(m = 0 ; m < 100 ; m++) {
+		
 
-	pthread_join(thread1,NULL);		
-       pthread_join(thread2,NULL);
+		pthread_join(thread1,NULL);		
+       	pthread_join(thread2,NULL);
     }	
     free(buff);
     gettimeofday(&after, NULL);
@@ -67,14 +67,14 @@ int main()
 
 void *multiplyMatrix(void *para){
 	    //multiply
-	    for (i=0; i<MXSIZE; i++) {
+	for (i=0; i<MXSIZE; i++) {
 		for (j=0; j<MXSIZE; j++) {
 		    C[i][j] = 0;
 		    for (k=0; k<MXSIZE; k++){
 		       C[i][j] += A[i][k]*B[k][j];
 		    }
 		}
-	   }
+	}
 	pthread_exit(NULL);
 }
 
@@ -86,7 +86,7 @@ void *output(void *param){
 	else {
 	    result = write(outfile, buff, DATASIZE);
 	    if (result <= 0){
-		perror("Error writing file\n");
+			perror("Error writing file\n");
 	    }
 	}
 	close(outfile);

@@ -26,7 +26,8 @@ void Multiply(void);
 void ToFile(void);
 
 int main()
-{
+{	
+	m=0;
     buff = (char *)malloc(sizeof(char)*(16<<20));
     int pid, status;
     srandom(seed);
@@ -36,24 +37,21 @@ int main()
 	    A[i][j] = random()/100.0;
 	    B[i][j] = random()/100.0;
 	}
-
+	//pid = fork();
     gettimeofday(&before, NULL);
-    for (m=0 ; m < 10; m++) {
-	
+    for (m=0 ; m < 100; m++) {
+		
     	if(fork()){
     		/* I/O */
-		pid = wait(&status);
+			pid = waitpid(&status);
     		ToFile();
-    		
     		
     	}else{
     		/* Computation */
-    		
     		Multiply();
     		exit(0);
+    		
     	}
-	
-
     }
     free(buff);
     gettimeofday(&after, NULL);
@@ -61,12 +59,13 @@ int main()
     count = (after.tv_sec - before.tv_sec) * 1e6;
     count += (after.tv_usec - before.tv_usec);
 
-    printf("\n Total time in usec: %d\n", count);
+    printf("\n MP Total time in usec: %d\n", count);
     return 0;
 };
 
 void Multiply(void){
-		for (i=0; i<MXSIZE; i++) {
+	//printf("%d Mult\n",m);
+	for (i=0; i<MXSIZE; i++) {
 	    for (j=0; j<MXSIZE; j++) {
 			C[i][j] = 0;
 			for (k=0; k<MXSIZE; k++){
@@ -76,6 +75,7 @@ void Multiply(void){
 	}
 }
 void ToFile(void){
+	//printf("%d IO\n",m);
 	outfile = open("testfileMP", O_RDWR|O_CREAT|O_APPEND|O_SYNC, 0777);
 	if (outfile <= 0)
 	    perror("Error opening file\n");

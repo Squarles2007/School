@@ -35,7 +35,7 @@ int main()
 	}
 
     gettimeofday(&before, NULL);
-    for (m=0 ; m < 10; m++) {
+    for (m=0 ; m < 100; m++) {
 	/* Computation */
 	for (i=0; i<MXSIZE; i++) {
 	    for (j=0; j<MXSIZE; j++) {

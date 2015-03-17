@@ -1,16 +1,20 @@
-.Phony:: all
 all:
-	
-	gcc -o serial serial.c
-	./serial
+	make compile
+	make timing
+	make remove
 
-	gcc -o mp mp.c
-	./mp
+compile:
+	gcc -o run_mp mp.c
+	gcc -o run_mt mt.c -pthread
+	gcc -o run_serial  serial.c
 
-	gcc -pthread -o mt mt.c
-	./mt
+timing:
+	for i in {1..5}; do \
+		/usr/bin/time -o mp_timings.txt -a -f 'Total Execution Time: %E\nTotal User Time: %U\n\n' ./run_mp; \
+		/usr/bin/time -o mt_timings.txt -a -f 'Total Execution Time: %E\nTotal User Time: %U\n\n' ./run_mt; \
+		/usr/bin/time -o serial_timings.txt -a -f 'Total Execution Time: %E\nTotal User Time: %U\n\n' ./run_serial; \
+	done;
 
-	ls -la
-	gcc -o delete deleteTestFiles.c
-	./delete
-	
+remove:
+	rm ./run*
+	rm ./testfile

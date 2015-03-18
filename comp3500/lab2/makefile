@@ -18,3 +18,5 @@ timing:
 remove:
 	rm ./run*
 	rm ./testfile
+	rm ./testfileMP
+	rm ./testfileMT

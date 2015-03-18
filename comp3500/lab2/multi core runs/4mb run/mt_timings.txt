@@ -1,0 +1,20 @@
+Total Execution Time: 1:33.99
+Total User Time: 93.79
+
+
+Total Execution Time: 1:33.33
+Total User Time: 93.26
+
+
+Total Execution Time: 1:32.56
+Total User Time: 92.51
+
+
+Total Execution Time: 1:31.88
+Total User Time: 91.78
+
+
+Total Execution Time: 1:30.92
+Total User Time: 90.85
+
+

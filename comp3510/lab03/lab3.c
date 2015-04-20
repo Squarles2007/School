@@ -23,9 +23,9 @@
 \*****************************************************************************/
 #define MAX_EVENT_ID 100
 
-//#define QUEUE_SIZE 2
+#define QUEUE_SIZE 2
 //#define QUEUE_SIZE 8
-#define QUEUE_SIZE 32
+//#define QUEUE_SIZE 32
 
 
 
@@ -33,11 +33,9 @@
 *                            Global data structures                           *
 \*****************************************************************************/
 
-typedef struct deviceQueue {
-	Event event;
-	int head, tail;
-}Queue;
-
+//Each device has an event array (queue) of size QUEUE_SIZE
+//each device also has a head and tail index responseTime (RT) and turnaroundTime(TT)
+//keeps up with events that have been processed
 typedef struct deviceInfo{
 	int head,tail;	
 	Timestamp RT;
@@ -53,12 +51,12 @@ typedef struct deviceInfo{
 *                                  Global data                                *
 \*****************************************************************************/
 
-Device device[MAX_NUMBER_DEVICES];
-int constant;
+Device device[MAX_NUMBER_DEVICES]; //array of devices
+int constant; //constant is &-ed with the value of head and tail for circular incrementing
 int maxDevice;
 int deviceNum;
-Timestamp totalRT;
-Timestamp totalTT;
+int newEvent;
+
 
 
 /*****************************************************************************\
@@ -70,7 +68,7 @@ void InterruptRoutineHandlerDevice(void);
 void BookKeeping();
 Event dequeue(int deviceNum);
 void enqueue(Event event);
-void printQueue(void);
+//void printQueue(void); //testing only
 
 
 
@@ -102,9 +100,10 @@ int main (int argc, char **argv) {
 void Control(void){
   constant = QUEUE_SIZE - 1;
   Event event;
-  Device deQueDevice;
   maxDevice = 0;
   int x = 0;
+  newEvent = 0;
+
 
 //intialize content
  int i = 0;
@@ -116,34 +115,42 @@ void Control(void){
 	device[i].RT    	= 0;
 	device[i].processed	= 0;
 }
-  while (1)
-  {
-  	 deviceNum = 0;
 
-  	 while(deviceNum <= maxDevice+1)
-  	 {
+    // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+    while (1)
+    {
+        
+        
+            while(deviceNum <= maxDevice)
+            {
 
-  	 	//event = dequeue(deviceNum);
-  	 	x = deviceNum;
-  	 	event = device[x].eventQueue[device[x].head];
-  	 	if(device[x].head != device[x].tail)
-  	 	{
-  	 		//head
-  	 		Server(&event);
-  	 		device[x].TT += Now() - event.When;
-  	 		device[x].head = (device[x].head + 1) & constant; //increment head
-  	 		device[x].processed++;
-  	 		
-  	 		if(deviceNum > maxDevice) { maxDevice = deviceNum ; }
 
-  	 		deviceNum = 0;
-  	 	}
-  	 	else
-  	 	{
-  	 		deviceNum++;
-  	 	}
-  	 }	//end while(deviceNum)
-  } //end while(1)
+                x = deviceNum; //save value of devicenum to x to pervent shared data issues
+
+                if(device[x].head != device[x].tail)
+                {
+                    
+                    event = dequeue(x);
+
+                    Server(&event);
+      	 	        device[x].TT += Now() - event.When;
+                  
+                    printf("\nServiced Device: %d\n\n",x);
+      	 	        device[x].processed++;
+      	 	        deviceNum = 0; //reset device number back to zero everytime . Zero has highest priority
+      	        }
+                else
+      	        { //if device[0] head == tail move to next device
+      	 		  if(newEvent == 1){ deviceNum = --newEvent; }
+                  else{ deviceNum++;}
+
+      	        }
+
+     	    }	//end while(deviceNum)
+           
+        
+    } //end while(1)
+    // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
 }
 
 
@@ -159,23 +166,21 @@ void InterruptRoutineHandlerDevice(void){
   Status CurrentStatus = Flags;
   Flags = 0;
   Event event;
+  deviceNum = 0;
   int position = 0;
+  newEvent = 1;
 
   while(CurrentStatus)
   {
   	if(CurrentStatus & 1){
-
-  		event = BufferLastEvent[position];
-  		  	printf("\nDEVICE%d: head = %d , tail = %d\n", event.DeviceID, device[event.DeviceID].head, device[event.DeviceID].tail);
-  	 		printf("Event Count: %d\n", device[event.DeviceID].processed);
-  	 		printf("MAX DEVICES: %d\n",maxDevice);
-  		enqueue(event);
-  		device[event.DeviceID].RT += Now() - event.When;
-  		DisplayEvent('x', &event);
-  		printQueue();
+  		  event = BufferLastEvent[position];
+  		  enqueue(event);
+  		  device[event.DeviceID].RT += Now() - event.When;
+  		  DisplayEvent('x', &event);
+          //printQueue();
   	}
   	position++;
-	CurrentStatus = CurrentStatus >> 1;
+    CurrentStatus = CurrentStatus >> 1;
   }
 }
 
@@ -188,51 +193,59 @@ void InterruptRoutineHandlerDevice(void){
 \***********************************************************************/
 void BookKeeping(void)
 {
-  // For EACH device, print out the following metrics :
-  // 1) the percentage of missed events, 2) the average response time, and 
-  // 3) the average turnaround time.
-  // Print the overall averages of the three metrics 1-3 above
-	int maxEvent = 100;
+    // For EACH device, print out the following metrics :
+    // 1) the percentage of missed events, 2) the average response time, and 
+    // 3) the average turnaround time.
+    // Print the overall averages of the three metrics 1-3 above
+    int maxEvent = 100;
 	double TotalAvgRT = 0;
-  	double TotalAvgTT = 0;
-  	double avgMissed = 0;
-  	int totalMissed	= 0;
-  	int i = 0;
-  	while(i <= maxDevice){
-  		avgMissed = (double) device[i].processed / maxEvent;
-  		totalMissed +=  maxEvent - device[i].processed;
-  		TotalAvgRT = device[i].RT / maxEvent;
-  		TotalAvgTT = device[i].TT / maxEvent;
-
+    double TotalAvgTT = 0;
+    double avgMissed = 0;
+    int totalMissed	= 0;
+    int i = 0;
+    while(i <= maxDevice){
+  	     avgMissed = (double) (maxEvent - device[i].processed) / maxEvent;
+  	     totalMissed +=  maxEvent - device[i].processed;
+  	     TotalAvgRT = device[i].RT / maxEvent;
+         TotalAvgTT = device[i].TT / maxEvent;
   		printf("Device %d processed %d events out of %d\n", i, device[i].processed, maxEvent);
   		printf("\tMissed  percentage:		%10.3f\n", 		avgMissed );
   		printf("\tAverage response time:		%10.3f\n", 	TotalAvgRT);
   		printf("\tAverage turnaround time:	%10.3f\n", 		TotalAvgTT);
-
-
-  		i++;
-  	}
+ 		i++;
+ 	}
 }
 
-
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
+ * ENQUEUE 
+ * Place new event on device[x]'s eventQueue at index tail. Then increment tail
+ * @param event - Event
+ * @return void
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * **/
 void enqueue(Event event)
 {
 	int deviceNumX = event.DeviceID;
 	device[deviceNumX].RT += Now() - event.When;
 	device[deviceNumX].eventQueue[device[deviceNumX].tail] = event;
 	device[deviceNumX].tail = (device[deviceNumX].tail + 1) & constant;
+    if(event.DeviceID > maxDevice) { maxDevice = event.DeviceID;}
+
 }
 
+
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
+ * DEQUEUE 
+ * Return Event that is on Device[x]'s eventQueue at index head. increment head
+ * @param deviceNum - int
+ * @return event - Event
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * **/
 Event dequeue(int deviceNum)
 {
 	Event event = device[deviceNum].eventQueue[device[deviceNum].head] ;
-	
 	device[deviceNum].head = (device[deviceNum].head + 1) & constant; //increment head
 	return event;
 }
-Device de(int deviceNum){
-	return device[deviceNum];
-}
+
 
 void printQueue(void){
 	int i = 0;

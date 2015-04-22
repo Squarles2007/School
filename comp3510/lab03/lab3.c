@@ -129,7 +129,7 @@ void Control(void){
 
                 x = deviceNum; //save value of devicenum to x to pervent shared data issues
 
-                if(device[x].counter > 0 && device[0].counter != 0)
+                if(device[x].counter > 0)
                 {
                   
 		    event = dequeue(x);

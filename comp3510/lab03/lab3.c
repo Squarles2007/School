@@ -41,6 +41,7 @@ typedef struct deviceInfo{
 	Timestamp RT;
 	Timestamp TT;
 	int processed;
+	int counter;
 	Event eventQueue[QUEUE_SIZE];
 }Device;
 
@@ -68,7 +69,7 @@ void InterruptRoutineHandlerDevice(void);
 void BookKeeping();
 Event dequeue(int deviceNum);
 void enqueue(Event event);
-//void printQueue(void); //testing only
+void printQueue(void); //testing only
 
 
 
@@ -109,40 +110,44 @@ void Control(void){
  int i = 0;
  for(i ; i < MAX_NUMBER_DEVICES ; i++)
  {	
-	device[i].head 		= 0;
-	device[i].tail 		= 0;
+	device[i].head 	= 0;
+	device[i].tail 	= 0;
 	device[i].TT 		= 0;
 	device[i].RT    	= 0;
 	device[i].processed	= 0;
+	device[i].counter 	= 0;
 }
 
     // * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
     while (1)
     {
         
-        
+            deviceNum = 0;
             while(deviceNum <= maxDevice)
             {
 
 
                 x = deviceNum; //save value of devicenum to x to pervent shared data issues
 
-                if(device[x].head != device[x].tail)
+                if(device[x].counter > 0 && device[0].counter != 0)
                 {
-                    
-                    event = dequeue(x);
-
-                    Server(&event);
-      	 	        device[x].TT += Now() - event.When;
+                  printf("\nEnter Service DID(%d)\n",x);
                   
-                    printf("\nServiced Device: %d\n\n",x);
-      	 	        device[x].processed++;
-      	 	        deviceNum = 0; //reset device number back to zero everytime . Zero has highest priority
-      	        }
+		    event = dequeue(x);
+
+                  Server(&event);
+      	 	    device[x].TT += Now() - event.When;
+                  
+                  printf("\nServiced Device: %d  Event: %d  COUNTER : %d\n\n", event.DeviceID , event.EventID, device[x].counter);
+      	 	   	
+		    device[x].processed++;
+      	 	    deviceNum = 0; //reset device number back to zero everytime . Zero has highest priority
+      	           printf("\nExit Service DID(%d)\n",x);
+		 }
                 else
-      	        { //if device[0] head == tail move to next device
-      	 		  if(newEvent == 1){ deviceNum = --newEvent; }
-                  else{ deviceNum++;}
+      	        { 
+      	 		    
+                  deviceNum++;
 
       	        }
 
@@ -174,13 +179,17 @@ void InterruptRoutineHandlerDevice(void){
   {
   	if(CurrentStatus & 1){
   		  event = BufferLastEvent[position];
-  		  enqueue(event);
+  		  
+		  if(device[event.DeviceID].counter < QUEUE_SIZE ){
+			++device[event.DeviceID].counter;
+		  	enqueue(event);
+		  }
   		  device[event.DeviceID].RT += Now() - event.When;
   		  DisplayEvent('x', &event);
-          //printQueue();
+        
   	}
   	position++;
-    CurrentStatus = CurrentStatus >> 1;
+    	CurrentStatus = CurrentStatus >> 1;
   }
 }
 
@@ -198,22 +207,22 @@ void BookKeeping(void)
     // 3) the average turnaround time.
     // Print the overall averages of the three metrics 1-3 above
     int maxEvent = 100;
-	double TotalAvgRT = 0;
+    double TotalAvgRT = 0;
     double TotalAvgTT = 0;
     double avgMissed = 0;
     int totalMissed	= 0;
     int i = 0;
     while(i <= maxDevice){
-  	     avgMissed = (double) (maxEvent - device[i].processed) / maxEvent;
-  	     totalMissed +=  maxEvent - device[i].processed;
-  	     TotalAvgRT = device[i].RT / maxEvent;
-         TotalAvgTT = device[i].TT / maxEvent;
+      avgMissed = (double) (maxEvent - device[i].processed) / maxEvent;
+      totalMissed +=  maxEvent - device[i].processed;
+  	  TotalAvgRT = device[i].RT / maxEvent;
+      TotalAvgTT = device[i].TT / maxEvent;
   		printf("Device %d processed %d events out of %d\n", i, device[i].processed, maxEvent);
   		printf("\tMissed  percentage:		%10.3f\n", 		avgMissed );
   		printf("\tAverage response time:		%10.3f\n", 	TotalAvgRT);
   		printf("\tAverage turnaround time:	%10.3f\n", 		TotalAvgTT);
- 		i++;
- 	}
+ 		  i++;
+ 	  }
 }
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * 
@@ -225,11 +234,14 @@ void BookKeeping(void)
 void enqueue(Event event)
 {
 	int deviceNumX = event.DeviceID;
-	device[deviceNumX].RT += Now() - event.When;
 	device[deviceNumX].eventQueue[device[deviceNumX].tail] = event;
+	
 	device[deviceNumX].tail = (device[deviceNumX].tail + 1) & constant;
-    if(event.DeviceID > maxDevice) { maxDevice = event.DeviceID;}
-
+  	if(event.DeviceID > maxDevice) 
+  	{ 
+      		maxDevice = event.DeviceID;
+  	}
+	printQueue();
 }
 
 
@@ -242,6 +254,7 @@ void enqueue(Event event)
 Event dequeue(int deviceNum)
 {
 	Event event = device[deviceNum].eventQueue[device[deviceNum].head] ;
+	--device[deviceNum].counter;
 	device[deviceNum].head = (device[deviceNum].head + 1) & constant; //increment head
 	return event;
 }

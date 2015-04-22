@@ -69,7 +69,7 @@ void InterruptRoutineHandlerDevice(void);
 void BookKeeping();
 Event dequeue(int deviceNum);
 void enqueue(Event event);
-void printQueue(void); //testing only
+//void printQueue(void); //testing only
 
 
 
@@ -131,7 +131,6 @@ void Control(void){
 
                 if(device[x].counter > 0 && device[0].counter != 0)
                 {
-                  printf("\nEnter Service DID(%d)\n",x);
                   
 		    event = dequeue(x);
 
@@ -142,7 +141,6 @@ void Control(void){
       	 	   	
 		    device[x].processed++;
       	 	    deviceNum = 0; //reset device number back to zero everytime . Zero has highest priority
-      	           printf("\nExit Service DID(%d)\n",x);
 		 }
                 else
       	        { 
@@ -241,7 +239,7 @@ void enqueue(Event event)
   	{ 
       		maxDevice = event.DeviceID;
   	}
-	printQueue();
+	
 }
 
 
@@ -259,7 +257,7 @@ Event dequeue(int deviceNum)
 	return event;
 }
 
-
+//not called.
 void printQueue(void){
 	int i = 0;
 	int j = 0;

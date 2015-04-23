@@ -23,8 +23,8 @@
 \*****************************************************************************/
 #define MAX_EVENT_ID 100
 
-#define QUEUE_SIZE 2
-//#define QUEUE_SIZE 8
+//#define QUEUE_SIZE 2
+#define QUEUE_SIZE 8
 //#define QUEUE_SIZE 32
 
 
@@ -233,7 +233,7 @@ void enqueue(Event event)
 {
 	int deviceNumX = event.DeviceID;
 	device[deviceNumX].eventQueue[device[deviceNumX].tail] = event;
-	
+	deviceNum = 0;
 	device[deviceNumX].tail = (device[deviceNumX].tail + 1) & constant;
   	if(event.DeviceID > maxDevice) 
   	{ 

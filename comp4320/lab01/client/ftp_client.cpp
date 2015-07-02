@@ -5,8 +5,6 @@
 
 using namespace std;
 
-	
-
 void commandArg();
 void help();
 void put();

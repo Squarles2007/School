@@ -30,15 +30,15 @@ int main(int argc, char *argv[])
 
     //Command line arguments
     string sServerAddress;
-    float fDamaged = 0;    //Default values for damage and loss
-    float fLost = 0;	      //If user only provides ip address values are 0
+    float damagedFloat = 0;    //Default values for damage and loss
+    float lostFloat = 0;	      //If user only provides ip address values are 0
 
-    bool bSent = false;
-    bool bGremlin = false;
+    bool sentBool = false;
+    bool gremlinBool = false;
 
     //Sending variables
-    Packet *pPacket;
-    Packet *pTemp = new Packet;
+    Packet *packet;
+    Packet *tempPack = new Packet;
 
     /* ============================
      *   user didn't provide args
@@ -57,14 +57,14 @@ int main(int argc, char *argv[])
 	    switchState = argv[i];
         switch (switchState[0]) {
             case 'd': {
-                fDamaged = atof(argv[i+1]);
-                cout << "\nPacket Damaged "<< fDamaged <<endl;
+                damagedFloat = atof(argv[i+1]);
+                cout << "\nPacket Damaged "<< damagedFloat <<endl;
             };
             break;
 
             case 'l': {
-                fLost = atof(argv[i+1]);
-		  		cout << "\nPacket Loss " << fLost << endl;
+                lostFloat = atof(argv[i+1]);
+		  		cout << "\nPacket Loss " << lostFloat << endl;
             };
             break;
 
@@ -87,6 +87,7 @@ int main(int argc, char *argv[])
         }  //end switch
     } //end loop ==============================================================
 
+    cout << "\n\n" ;   // blank line for output
 
     /* ========================================================================
     *   Loop forever
@@ -112,7 +113,6 @@ int main(int argc, char *argv[])
 		cin.clear();
 		cin >> ln;
 		string command = ln;
-		cout << command << endl;
 		if(ln.compare("2") == 0) {	break; }
 		
 		if(ln.compare("1") == 0 ) {
@@ -131,22 +131,22 @@ int main(int argc, char *argv[])
 			
 				//Now send a 1 packet overhead for the filename
 			
-				bSent = false;
-				pPacket = constructPacket((char*)"PUT TestFile1", strlen("PUT TestFile1"));
-				while(!bSent ) {
-					memcpy(pTemp, pPacket, sizeof( Packet ));
-					bGremlin = gremlin(fDamaged, fLost, pTemp);
-					bSent = sendPacket(pTemp, bGremlin);
+				sentBool = false;
+				packet = constructPacket((char*)"PUT TestFile", strlen("PUT TestFile"));
+				while(!sentBool ) {
+					memcpy(tempPack, packet, sizeof( Packet ));
+					gremlinBool = gremlin(damagedFloat, lostFloat, tempPack);
+					sentBool = sendPacket(tempPack, gremlinBool);
 					cout << "Sending put..." << endl;
 				}	
 			
 				while(!putfile.eof()) {
 
-					/*============================================
-					* This part of the code reads in from the      
-					* open file and fills up the data part of      
-					* the packet. It also calculates the checksum. 
-					===============================================*/
+					/*=========================================================
+					*  This reads in from the open file and fills    
+					*  up the data part of the packet. It also  
+					*  calculates the checksum. 
+					===========================================================*/
 					for(int i = 0; i < DATASIZE; i++) {
 						if(!putfile.eof()) {
 							if( i < 48 ) {
@@ -164,15 +164,15 @@ int main(int argc, char *argv[])
 					cout << endl;
 				
 
-					/*================================================
+					/*=========================================================
 					* GREMLIN function:	 
-					==================================================*/
-					bSent = false;
-					pPacket = constructPacket(buff, strlen(buff));
-					while( !bSent ) {
-						memcpy(pTemp, pPacket, sizeof( Packet ));
-						bGremlin = gremlin(fDamaged, fLost, pTemp);
-						bSent = sendPacket(pTemp, bGremlin); 
+					==========================================================*/
+					sentBool = false;
+					packet = constructPacket(buff, strlen(buff));
+					while( !sentBool ) {
+						memcpy(tempPack, packet, sizeof( Packet ));
+						gremlinBool = gremlin(damagedFloat, lostFloat, tempPack);
+						sentBool = sendPacket(tempPack, gremlinBool); 
 					}
 				
 				
@@ -205,51 +205,51 @@ int main(int argc, char *argv[])
 * loss probability. 
 * (more information in README under GREMLIN FUNCTION)
 *=================================================================================*/
-bool gremlin(float fDamaged, float fLost, Packet* ppacket) {
+bool gremlin(float damagedFloat, float lostFloat, Packet* packet) {
     
-    if(fLost > (1.0 * rand()) / (1.0 * RAND_MAX)) {
+    if(lostFloat > (1.0 * rand()) / (1.0 * RAND_MAX)) {
         return true;
     }
 
-    if(fDamaged > (1.0 * rand()) / (1.0 * RAND_MAX)) {
+    if(damagedFloat > (1.0 * rand()) / (1.0 * RAND_MAX)) {
         int numDamaged = rand() % 10;
 	 int byteNum = rand() % BUFSIZE;
 
 	 if(numDamaged == 9) {
 
-	     if(numDamaged > 1) { ppacket->Data[numDamaged-HEADERSIZE]+= 8; }
-	     else if(numDamaged == 1) {  ppacket->Checksum+= 8; }
-	     else {  ppacket->Sequence+= 8; }
+	     if(numDamaged > 1) { packet->Data[numDamaged-HEADERSIZE]+= 8; }
+	     else if(numDamaged == 1) {  packet->Checksum+= 8; }
+	     else {  packet->Sequence+= 8; }
 			
             numDamaged = rand() % 10;
 	     
-	     if(numDamaged > 1) { ppacket->Data[numDamaged-HEADERSIZE]+= 4; }
-	     else if(numDamaged == 1) {  ppacket->Checksum+= 4;  }
-	     else { ppacket->Sequence+= 4; }
+	     if(numDamaged > 1) { packet->Data[numDamaged-HEADERSIZE]+= 4; }
+	     else if(numDamaged == 1) {  packet->Checksum+= 4;  }
+	     else { packet->Sequence+= 4; }
 
             numDamaged = rand() % 10;
 
-	     if(numDamaged > 1) { ppacket->Data[numDamaged-HEADERSIZE]+= 2; }
-	     else if(numDamaged == 1)  { ppacket->Checksum+= 2;  }
-	     else { ppacket->Sequence+= 2; }
+	     if(numDamaged > 1) { packet->Data[numDamaged-HEADERSIZE]+= 2; }
+	     else if(numDamaged == 1)  { packet->Checksum+= 2;  }
+	     else { packet->Sequence+= 2; }
 	}
 	else if(numDamaged > 6) {
 
-	    if(numDamaged > 1) { ppacket->Data[numDamaged-HEADERSIZE]+= 8; }
-           else if(numDamaged == 1) { ppacket->Checksum+= 8; }
-	    else{ ppacket->Sequence+= 8;	}
+	    if(numDamaged > 1) { packet->Data[numDamaged-HEADERSIZE]+= 8; }
+           else if(numDamaged == 1) { packet->Checksum+= 8; }
+	    else{ packet->Sequence+= 8;	}
 
 	    numDamaged = rand() % 10;
 
-	    if(numDamaged > 1) { ppacket->Data[numDamaged-HEADERSIZE]+= 4; }
-	    else if(numDamaged == 1){ ppacket->Checksum+= 4; }
-	    else {	ppacket->Sequence+= 4; }
+	    if(numDamaged > 1) { packet->Data[numDamaged-HEADERSIZE]+= 4; }
+	    else if(numDamaged == 1){ packet->Checksum+= 4; }
+	    else {	packet->Sequence+= 4; }
 	}
 	else {
 
-	    if(numDamaged > 1) {  ppacket->Data[numDamaged-HEADERSIZE]+=8; }
-	    else if(numDamaged == 1) { ppacket->Checksum+=4; }
-	    else { ppacket->Sequence+= 2; }
+	    if(numDamaged > 1) {  packet->Data[numDamaged-HEADERSIZE]+=8; }
+	    else if(numDamaged == 1) { packet->Checksum+=4; }
+	    else { packet->Sequence+= 2; }
 	}
 
     }
@@ -259,13 +259,13 @@ bool gremlin(float fDamaged, float fLost, Packet* ppacket) {
 
 
 
-unsigned char generateChecksum( Packet* pPacket ) {
+unsigned char generateChecksum( Packet* packet ) {
     unsigned char retVal = 0x00;
 
-    retVal = pPacket->Sequence;
+    retVal = packet->Sequence;
 
     for( int i=0; i < DATASIZE; i++ ) {
-        retVal += pPacket->Data[i];
+        retVal += packet->Data[i];
     }
 
     retVal = ~retVal;
@@ -274,34 +274,34 @@ unsigned char generateChecksum( Packet* pPacket ) {
 }
 
 Packet* constructPacket(char* data, int length) {
-    Packet* pPacket = new Packet;
+    Packet* packet = new Packet;
     static uint8_t sequenceNum = 0;
 
-    pPacket->Sequence = sequenceNum;
+    packet->Sequence = sequenceNum;
 
     sequenceNum = 1 - sequenceNum;
 
     for( int i=0; i < DATASIZE; i++ ) {
         if( i < length )
-            pPacket->Data[i] = data[i];
+            packet->Data[i] = data[i];
         else
-            pPacket->Data[i] = '\0';
+            packet->Data[i] = '\0';
     }
 
-    pPacket->Checksum = generateChecksum(pPacket);
+    packet->Checksum = generateChecksum(packet);
 
-    return pPacket;
+    return packet;
 }
 
 
-bool sendPacket(const Packet* pPacket, bool bLost) {
+bool sendPacket(const Packet* packet, bool bLost) {
     bool bReturn = false;
 
 	//Send packet
 	if(!bLost)
 	{
-		if (sendto(fd, pPacket, BUFSIZE, 0, (struct sockaddr*)&serverAddress, slen) == -1) {
-			cerr << "Problem sending packet with sequence #" << pPacket->Sequence << "..." << endl;
+		if (sendto(fd, packet, BUFSIZE, 0, (struct sockaddr*)&serverAddress, slen) == -1) {
+			cerr << "Problem sending packet with sequence #" << packet->Sequence << "..." << endl;
 			bReturn = false;
 		} 
 	}
@@ -322,14 +322,14 @@ bool sendPacket(const Packet* pPacket, bool bLost) {
 		cerr << "Error polling socket..." << endl;
 		bReturn = false;
 	} else if( recvPollVal == 0 ) {        //If timeout occurs
-		cerr << "Timeout... Lost Packet, Sequence Number - "  << (int)pPacket->Sequence << endl;
+		cerr << "Timeout... Lost Packet, Sequence Number - "  << (int)packet->Sequence << endl;
 		bReturn = false;
 	} else {
 		iLength = recvfrom(fd, recvline, MAXLINE, 0, (struct sockaddr*)&serverAddress, &slt);
 
 		if( recvline[0] == '1') {          //If ACK Received, return true
 			cout << "ACK - " << (int)recvline[1] << endl;
-			//cout << pPacket->Data << endl;
+			//cout << packet->Data << endl;
 		    bReturn = true;
 		} else if( recvline[0] == '0' ) {     //Else if NAK, return false
 			cout << "NAK - " << (int)recvline[1] << endl;

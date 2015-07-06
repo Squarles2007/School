@@ -1,4 +1,4 @@
-//compile: make
+ //compile: make
 //run : ./ftp_client d <num> l <num> s <ipaddress>
 
 #include "ftp_client.h"
@@ -108,14 +108,14 @@ int main(int argc, char *argv[])
 			return 0;
 		}
 
-		cout << "Enter PUT command to transfer file or quit to exit: ";
+		cout << "Enter (1) to transfer file or (2) to quit.\n\nEnter: ";
 		cin.clear();
 		cin >> ln;
 		string command = ln;
 		cout << command << endl;
-		if(ln.compare("quit") == 0) {	break; }
+		if(ln.compare("2") == 0) {	break; }
 		
-		if(ln.compare("PUT") == 0 || ln.compare("put") == 0) {
+		if(ln.compare("1") == 0 ) {
 			cin.clear();
 			cout << "Enter File Name: ";
 			cin >> ln;
@@ -132,7 +132,7 @@ int main(int argc, char *argv[])
 				//Now send a 1 packet overhead for the filename
 			
 				bSent = false;
-				pPacket = constructPacket((char*)"PUT TestFile", strlen("PUT TestFile"));
+				pPacket = constructPacket((char*)"PUT TestFile1", strlen("PUT TestFile1"));
 				while(!bSent ) {
 					memcpy(pTemp, pPacket, sizeof( Packet ));
 					bGremlin = gremlin(fDamaged, fLost, pTemp);

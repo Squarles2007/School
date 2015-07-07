@@ -12,6 +12,7 @@
 
 unsigned char generateChecksum( Packet*); 
 void getData(string);
+string dataToString(char[]);
 
 int main()
 {    
@@ -42,8 +43,9 @@ int main()
     /* ========================================================================
     *   waiting/receiving data
     *  ========================================================================*/
-    //string command;
-    //string filename;
+    string command;
+    string filename;
+    string temp;
     for (;;) {
         //http://www.ccplusplus.com/2011/09/recvfrom-example-c-code.html
 		recvlen = recvfrom(fd, 								//Socket
@@ -57,7 +59,7 @@ int main()
 
         if (recvlen > 0) {
 
-			//copy buffer into data - header
+			//copy buffer into data - header and print
             for( int x = HEADERSIZE; x < recvlen; x++) {
             	data[x - HEADERSIZE] = buf[x];
 				cout << buf[x];
@@ -72,9 +74,11 @@ int main()
             	sendto(fd, nak, 2, 0, (struct sockaddr *)&remoteAddr, addrlen);
             }
             else {
-				string command(data);
-				if ( command.substr(0,3) == "PUT" ) {
-					string filename = command.substr(4); //remove PUT
+            	temp = dataToString(data);
+            	command = temp.substr(0,3);
+				
+				if ( temp == "PUT" ) {
+					filename = temp.substr(4); //remove PUT
 					cout << "Checksum valid - ACK" << endl;
 					seqnum = packet->Sequence;
 					ack[1] = seqnum;
@@ -185,10 +189,16 @@ void getData(string filenameIN) {
 	outFile.close();
 }
 
+/* ==========================================================================
+*	dataToString
+* 	takes data array and returns string
+*	@param char[]
+*	@return string
+* ===========================================================================*/
 string dataToString(char data[]){
 	string dataString = "";
 	for(int i = 0 ; i < (sizeof(data)/sizeof(*data)); i++){
-		cout << data[i];
+		dataString += data[i];
 	}
 	return dataString;
 }

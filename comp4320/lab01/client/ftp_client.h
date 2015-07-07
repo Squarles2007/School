@@ -2,6 +2,8 @@
 
 
 #include <iostream>
+#include <stdlib.h>
+#include <ctime>
 #include <cstdlib>
 #include <string>
 #include <cstring> 

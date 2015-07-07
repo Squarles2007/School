@@ -1,4 +1,14 @@
- //compile: make
+/* ============================================================================
+*	COMP 4320 
+*	Lab01
+*	FTP Transfer Server
+*	AU ports 10026 - 10029
+*	GROUP:
+*	Drew Hoover , F. Davis Quarles, Kullen Williams
+*/
+
+
+//compile: make
 //run : ./ftp_client d <num> l <num> s <ipaddress>
 
 #include "ftp_client.h"
@@ -30,8 +40,8 @@ int main(int argc, char *argv[])
 
     //Command line arguments
     string sServerAddress;
-    float damagedFloat = 0;    //Default values for damage and loss
-    float lostFloat = 0;	      //If user only provides ip address values are 0
+    float damagedFloat = 0;    		//Default values for damage and loss
+    float lostFloat = 0;	     	//If user only provides ip address values are 0
 
     bool sentBool = false;
     bool gremlinBool = false;
@@ -39,6 +49,9 @@ int main(int argc, char *argv[])
     //Sending variables
     Packet *packet;
     Packet *tempPack = new Packet;
+
+    //put and filename
+    string putFilename;
 
     /* ============================
      *   user didn't provide args
@@ -119,8 +132,10 @@ int main(int argc, char *argv[])
 			cin.clear();
 			cout << "Enter File Name: ";
 			cin >> ln;
-			string filename = ln;
-			cout << filename << endl;
+			
+			putFilename = "PUT " + ln;
+
+			cout << putFilename << endl;
 			//Now ln is our filename to send
 			ifstream putfile;
 			putfile.open(ln.c_str());
@@ -132,7 +147,7 @@ int main(int argc, char *argv[])
 				//Now send a 1 packet overhead for the filename
 			
 				sentBool = false;
-				packet = constructPacket((char*)"PUT TestFile", strlen("PUT TestFile"));
+				packet = constructPacket((char*)putFilename.c_str(), strlen(putFilename.c_str()));
 				while(!sentBool ) {
 					memcpy(tempPack, packet, sizeof( Packet ));
 					gremlinBool = gremlin(damagedFloat, lostFloat, tempPack);
@@ -180,7 +195,7 @@ int main(int argc, char *argv[])
 			
 				sendto(fd, "\0", 1, 0, (struct sockaddr*)&serverAddress, slen);
 
-				cout << "Sending Complete!\n";
+				cout << "Sending Complete!\n\n";
 				putfile.close();
 			}
 			else

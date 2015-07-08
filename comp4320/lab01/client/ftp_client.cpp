@@ -5,24 +5,13 @@
 *	AU ports 10026 - 10029
 *	GROUP:
 *	Drew Hoover , F. Davis Quarles, Kullen Williams
-*  */
-
-
-//compile: make
-//run : ./ftp_client d <num> l <num> s <ipaddress>
+*   compile: make OR g++ -o ftp_client ftp_client.cpp
+*   run: ./ftp_client d <num%> l <num%> s <destination IP>
+*  ==========================================================================*/
 
 #include "ftp_client.h"
 
 using namespace std;
-
-void commandArg();
-void help();
-void put();
-char getChecksum(char*, int);
-bool gremlin(float, float, Packet*);
-char* loadFileToBuffer();
-Packet* buildPacket(char*, int);
-bool sendPacket(const Packet*, bool); 
 
 int fd;
 int slen;
@@ -44,12 +33,9 @@ int main(int argc, char *argv[])
     slen = sizeof(serverAddress);
     slt = sizeof(serverAddress);
 
-	    //Command line arguments
-    
-    damagedFloat = 0;    		//Default values for damage and loss
-    lostFloat = 0;	     	//If user only provides ip address values are 0
-
-
+	//DEFAULT VARS
+    damagedFloat = 0;  //Default values for damage and loss
+    lostFloat = 0;	   //If user only provides ip address values are 0
     bool sentBool = false;
     bool gremlinBool = false;
 
@@ -57,14 +43,10 @@ int main(int argc, char *argv[])
     Packet *packet;
     Packet *tempPack = new Packet;
 
-   readCommandArgs(argc, argv);
+    readCommandArgs(argc, argv);  //import command line args
 
    
-
-    /* ========================================================================
-    *   Loop forever
-    *  ========================================================================*/
-    string ln;
+    string in;
     string putFilename;  //COMMAND AND FILENAME
     for(;;) {
         /* ====================================================================
@@ -90,21 +72,21 @@ int main(int argc, char *argv[])
 
 		cout << "Enter (1) to PUT file or (2) to quit.\n\nEnter: ";
 		cin.clear();
-		cin >> ln;
-		string command = ln;
-		if(ln.compare("2") == 0) {	break; }
+		cin >> in;
+		string command = in;
+		if(in.compare("2") == 0) {	break; }
 		
-		if(ln.compare("1") == 0 ) {
+		if(in.compare("1") == 0 ) {
 			cin.clear();
 			cout << "Enter File Name: ";
-			cin >> ln;
+			cin >> in;
 			
-			putFilename = "PUT " + ln;
+			putFilename = "PUT " + in;
 
 			cout << putFilename << endl;
-			//Now ln is our filename to send
+			//Now in is our filename to send
 			ifstream putfile;
-			putfile.open(ln.c_str());
+			putfile.open(in.c_str());   //open in file
 			unsigned char csum = 0x00;
 			unsigned char lost = 0x00;
 			char buff[DATASIZE];
@@ -336,31 +318,13 @@ bool sendPacket(const Packet* packet, bool bLost) {
 
 
 
-
-/* ============================================================================
-*  HELP!!!!
-*  little Extra instructions
-*  ============================================================================*/
-void help() {
-	commandArg();
-}
-
-/* ============================================================================
-*  COMMAND ARGS !!!!
-*  if user trys to run program with no args or runs with ./fileName h
-*  displays proper syntax
-*  ============================================================================*/
-void commandArg(){
-	cout << "***************************************" << endl;
-    cout << "\nWHEN RUNNING: \nUse one of the following syntax\n\n./fileName l <lost packets> d <damaged packets> s <ip address>" << endl;
-    cout << "OR ./fileName d <damaged packets> s <ip address>" << endl;
-    cout << "OR ./fileName l <lost packets> s <ip address>"  <<endl;
-    cout << "OR ./fileName s <ip address>\n" <<endl;
-    cout << "***************************************" << endl;
-}
-
-
-//command arg read
+/*=============================================================================
+*	readCommandArgs - takes in the arg count and the argument
+*	interprets th args and sets the corrisponding values
+*   s = server , d = damage, l = loss , h = help
+*	@param int, char*
+*   @return int
+*============================================================================*/
 int readCommandArgs(int argc, char *argv[]) {
 	 /* ============================
      *   user didn't provide args
@@ -370,9 +334,9 @@ int readCommandArgs(int argc, char *argv[]) {
 	return 0;
     }
     
-    /* ========================================================================
+    /* ==================================================
     *   read in command line args
-    *  =======================================================================*/
+    *  ==================================================*/
     char *switchState;
 
     for(int i=1;i < argc; i+= 2) {
@@ -401,14 +365,40 @@ int readCommandArgs(int argc, char *argv[]) {
             	return 0;
             };
             break;
-	     	default: {
+	     	default: {  //incorrect response
 				commandArg();
               	return 0;
 	    	}
 
         }  //end switch
-    } //end loop ==============================================================
+    } //end loop ===================================================
 
     cout << "\n" ;   // blank line for output
-    return 1;
+    return 1;  //success
 }
+
+
+
+/* ============================================================================
+*  HELP!!!!
+*  little Extra instructions
+*  ============================================================================*/
+void help() {
+	commandArg();
+}
+
+/* ============================================================================
+*  COMMAND ARGS !!!!
+*  if user trys to run program with no args or runs with ./fileName h
+*  displays proper syntax
+*  ============================================================================*/
+void commandArg(){
+	cout << "***************************************" << endl;
+    cout << "\nWHEN RUNNING: \nUse one of the following syntax\n\n./fileName l <lost packets> d <damaged packets> s <ip address>" << endl;
+    cout << "OR ./fileName d <damaged packets> s <ip address>" << endl;
+    cout << "OR ./fileName l <lost packets> s <ip address>"  <<endl;
+    cout << "OR ./fileName s <ip address>\n" <<endl;
+    cout << "***************************************" << endl;
+}
+
+

@@ -11,12 +11,12 @@
 #include <sstream>
 #include <fstream>
 
-#include <sys/types.h>
-#include <sys/socket.h>
+#include <sys/types.h>   //data types
+#include <sys/socket.h>	 // sockets
 #include <sys/poll.h>
 
 #include <arpa/inet.h>
-#include <netinet/in.h>
+#include <netinet/in.h>  //internet domain addresses
 
 #include <stdint.h>
 
@@ -41,8 +41,6 @@ bool gremlin(float, float, Packet*);
 char* loadFileToBuffer();
 Packet* buildPacket(char*, int);
 bool sendPacket(const Packet*, bool);
-
-
 
 
 class Client{

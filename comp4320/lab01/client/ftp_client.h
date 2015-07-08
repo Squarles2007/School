@@ -32,7 +32,21 @@ typedef struct {
     char Data[DATASIZE];
 } Packet;
 
+int readCommandArgs(int, char**);
+void commandArg();
+void help();
+void put();
+char getChecksum(char*, int);
+bool gremlin(float, float, Packet*);
+char* loadFileToBuffer();
+Packet* buildPacket(char*, int);
+bool sendPacket(const Packet*, bool);
+
+
+
+
 class Client{
+
 
 
 };

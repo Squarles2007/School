@@ -28,20 +28,27 @@ int fd;
 int slen;
 socklen_t slt;
 struct sockaddr_in serverAddress; 
+	    
+//Command line arguments
+string destIP;
+float damagedFloat;    		
+float lostFloat ;	     	
+
 
 int main(int argc, char *argv[])
 {
-    //cout << "count " << argc << endl;
+    
     //Socket variables
     struct hostent *hp;
     unsigned char buf[BUFSIZE];
     slen = sizeof(serverAddress);
     slt = sizeof(serverAddress);
 
-    //Command line arguments
-    string sServerAddress;
-    float damagedFloat = 0;    		//Default values for damage and loss
-    float lostFloat = 0;	     	//If user only provides ip address values are 0
+	    //Command line arguments
+    
+    damagedFloat = 0;    		//Default values for damage and loss
+    lostFloat = 0;	     	//If user only provides ip address values are 0
+
 
     bool sentBool = false;
     bool gremlinBool = false;
@@ -50,64 +57,23 @@ int main(int argc, char *argv[])
     Packet *packet;
     Packet *tempPack = new Packet;
 
-    //put and filename
-    string putFilename;
+   readCommandArgs(argc, argv);
 
-    /* ============================
-     *   user didn't provide args
-     * ============================*/
-    if(argc == 1){
-	help();
-	return 0;
-    }
-    
-    /* ========================================================================
-    *   read in command line args
-    *  =======================================================================*/
-    char *switchState;
-
-    for(int i=1;i < argc; i+= 2) {
-	    switchState = argv[i];
-        switch (switchState[0]) {
-            case 'd': {
-                damagedFloat = atof(argv[i+1]);
-                cout << "\nPacket Damaged "<< damagedFloat <<endl;
-            };
-            break;
-
-            case 'l': {
-                lostFloat = atof(argv[i+1]);
-		  		cout << "\nPacket Loss " << lostFloat << endl;
-            };
-            break;
-
-            case 's': {
-                sServerAddress = argv[i+1];
- 		  		cout << "\nIP address " << sServerAddress << endl;
-            };
-            break;
-
-            case 'h': {   //help  
-            	help();
-            	return 0;
-            };
-            break;
-	     	default: {
-				commandArg();
-              	return 0;
-	    	}
-
-        }  //end switch
-    } //end loop ==============================================================
-
-    cout << "\n\n" ;   // blank line for output
+   
 
     /* ========================================================================
     *   Loop forever
     *  ========================================================================*/
     string ln;
+    string putFilename;  //COMMAND AND FILENAME
     for(;;) {
-        //Open socket
+        /* ====================================================================
+        *  For UDP/IP sockets
+        *  AF_INET  = ip address family
+        *  SOCK_DGRAM = datagram service
+        *  0 = protocol
+        *  https://www.cs.rutgers.edu/~pxk/417/notes/sockets/udp.html
+        *  ====================================================================*/
 		if ((fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
             cout << "Unable to open socket. Exiting..." << endl;
 	     	return 0;
@@ -117,12 +83,12 @@ int main(int argc, char *argv[])
 		serverAddress.sin_family = AF_INET;
 		serverAddress.sin_port = htons(PORT);
 
-		if (inet_aton(sServerAddress.c_str(), &serverAddress.sin_addr)==0) {
+		if (inet_aton(destIP.c_str(), &serverAddress.sin_addr)==0) {
 			cout << "There was a problem with the server IP address. Exiting..." << endl;
 			return 0;
 		}
 
-		cout << "Enter (1) to transfer file or (2) to quit.\n\nEnter: ";
+		cout << "Enter (1) to PUT file or (2) to quit.\n\nEnter: ";
 		cin.clear();
 		cin >> ln;
 		string command = ln;
@@ -190,13 +156,14 @@ int main(int argc, char *argv[])
 				
 				
 				}
-			
-				sendto(fd, 								 //socket
-					   "\0", 							 //*buf
-					   1, 								 //len
-					   0, 								 //FLAGS no option
-					   (struct sockaddr*)&serverAddress, //to address
-					   slen);							 // address length
+				/* ============================================================
+				* sendto - allows us to specify the destination w/out
+				* having to connect to the server first.
+				*   
+				* sendto(int socket, const void *buffer, size_t length, 
+				* int flags, const struct sockaddr *dest_addr,socklen_t dest_len)
+				*  ============================================================*/			
+				sendto(fd,"\0", 1,0,(struct sockaddr*)&serverAddress,slen);
 
 				cout << "Sending Complete!\n\n";
 				putfile.close();
@@ -274,6 +241,25 @@ bool gremlin(float damagedFloat, float lostFloat, Packet* packet) {
     return false;
 } //END GREMLIN ===============================================================
 
+/* ============================================================================
+*  getChecksum-  https://en.wikipedia.org/wiki/IPv4_header_checksum
+*  adds every bit from the the packet's data[] together. Which should be full.
+*  so, when you invert checksum the result is 0 (0x00) meaning no errors
+*  @param Packet*  (char data[], unsigned char Checksum, uint8_t Sequence )
+*  ============================================================================*/
+unsigned char getChecksum(Packet* packet ) {
+    unsigned char checksum = 0x00;
+
+    checksum = packet->Sequence;
+
+    for( int i=0; i < DATASIZE; i++ ) {
+        checksum += packet->Data[i];
+    }
+
+   checksum = ~checksum;   //invert   ff --> 00
+
+    return checksum;
+}
 
 
 /* ============================================================================
@@ -348,25 +334,7 @@ bool sendPacket(const Packet* packet, bool bLost) {
 	return bReturn;
 }  //END sendPacket
 
-/* ============================================================================
-*  getChecksum-  https://en.wikipedia.org/wiki/IPv4_header_checksum
-*  adds every bit from the the packet's data[] together. Which should be full.
-*  so, when you invert checksum the result is 0 (0x00) meaning no errors
-*  @param Packet*  (char data[], unsigned char Checksum, uint8_t Sequence )
-*  ============================================================================*/
-unsigned char getChecksum( Packet* packet ) {
-    unsigned char checksum = 0x00;
 
-    checksum = packet->Sequence;
-
-    for( int i=0; i < DATASIZE; i++ ) {
-        checksum += packet->Data[i];
-    }
-
-   checksum = ~checksum;   //invert   ff --> 00
-
-    return checksum;
-}
 
 
 /* ============================================================================
@@ -391,3 +359,56 @@ void commandArg(){
     cout << "***************************************" << endl;
 }
 
+
+//command arg read
+int readCommandArgs(int argc, char *argv[]) {
+	 /* ============================
+     *   user didn't provide args
+     * ============================*/
+    if(argc == 1){
+	help();
+	return 0;
+    }
+    
+    /* ========================================================================
+    *   read in command line args
+    *  =======================================================================*/
+    char *switchState;
+
+    for(int i=1;i < argc; i+= 2) {
+	    switchState = argv[i];
+        switch (switchState[0]) {
+            case 'd': {
+                damagedFloat = atof(argv[i+1]);
+                cout << "\nPacket Damaged "<< damagedFloat <<endl;
+            };
+            break;
+
+            case 'l': {
+                lostFloat = atof(argv[i+1]);
+		  		cout << "\nPacket Loss " << lostFloat << endl;
+            };
+            break;
+
+            case 's': {
+                destIP = argv[i+1];
+ 		  		cout << "\nDestination IP address " << destIP << endl;
+            };
+            break;
+
+            case 'h': {   //help  
+            	help();
+            	return 0;
+            };
+            break;
+	     	default: {
+				commandArg();
+              	return 0;
+	    	}
+
+        }  //end switch
+    } //end loop ==============================================================
+
+    cout << "\n" ;   // blank line for output
+    return 1;
+}

@@ -18,10 +18,10 @@ using namespace std;
 void commandArg();
 void help();
 void put();
-char generateChecksum(char*, int);
+char getChecksum(char*, int);
 bool gremlin(float, float, Packet*);
 char* loadFileToBuffer();
-Packet* constructPacket(char*, int);
+Packet* buildPacket(char*, int);
 bool sendPacket(const Packet*, bool); 
 
 int fd;
@@ -147,7 +147,7 @@ int main(int argc, char *argv[])
 				//Now send a 1 packet overhead for the filename
 			
 				sentBool = false;
-				packet = constructPacket((char*)putFilename.c_str(), strlen(putFilename.c_str()));
+				packet = buildPacket((char*)putFilename.c_str(), strlen(putFilename.c_str()));
 				while(!sentBool ) {
 					memcpy(tempPack, packet, sizeof( Packet ));
 					gremlinBool = gremlin(damagedFloat, lostFloat, tempPack);
@@ -158,9 +158,7 @@ int main(int argc, char *argv[])
 				while(!putfile.eof()) {
 
 					/*=========================================================
-					*  This reads in from the open file and fills    
-					*  up the data part of the packet. It also  
-					*  calculates the checksum. 
+					*  loads buffer and prints sample 
 					===========================================================*/
 					for(int i = 0; i < DATASIZE; i++) {
 						if(!putfile.eof()) {
@@ -183,7 +181,7 @@ int main(int argc, char *argv[])
 					* GREMLIN function:	 
 					==========================================================*/
 					sentBool = false;
-					packet = constructPacket(buff, strlen(buff));
+					packet = buildPacket(buff, strlen(buff));
 					while( !sentBool ) {
 						memcpy(tempPack, packet, sizeof( Packet ));
 						gremlinBool = gremlin(damagedFloat, lostFloat, tempPack);
@@ -193,7 +191,12 @@ int main(int argc, char *argv[])
 				
 				}
 			
-				sendto(fd, "\0", 1, 0, (struct sockaddr*)&serverAddress, slen);
+				sendto(fd, 								 //socket
+					   "\0", 							 //*buf
+					   1, 								 //len
+					   0, 								 //FLAGS no option
+					   (struct sockaddr*)&serverAddress, //to address
+					   slen);							 // address length
 
 				cout << "Sending Complete!\n\n";
 				putfile.close();
@@ -273,22 +276,10 @@ bool gremlin(float damagedFloat, float lostFloat, Packet* packet) {
 
 
 
-
-unsigned char generateChecksum( Packet* packet ) {
-    unsigned char retVal = 0x00;
-
-    retVal = packet->Sequence;
-
-    for( int i=0; i < DATASIZE; i++ ) {
-        retVal += packet->Data[i];
-    }
-
-    retVal = ~retVal;
-
-    return retVal;
-}
-
-Packet* constructPacket(char* data, int length) {
+/* ============================================================================
+*
+*  ============================================================================*/
+Packet* buildPacket(char* data, int length) {
     Packet* packet = new Packet;
     static uint8_t sequenceNum = 0;
 
@@ -303,10 +294,10 @@ Packet* constructPacket(char* data, int length) {
             packet->Data[i] = '\0';
     }
 
-    packet->Checksum = generateChecksum(packet);
+    packet->Checksum = getChecksum(packet);
 
     return packet;
-}
+}  //end buildPacket
 
 
 bool sendPacket(const Packet* packet, bool bLost) {
@@ -355,6 +346,26 @@ bool sendPacket(const Packet* packet, bool bLost) {
 	}
   
 	return bReturn;
+}  //END sendPacket
+
+/* ============================================================================
+*  getChecksum-  https://en.wikipedia.org/wiki/IPv4_header_checksum
+*  adds every bit from the the packet's data[] together. Which should be full.
+*  so, when you invert checksum the result is 0 (0x00) meaning no errors
+*  @param Packet*  (char data[], unsigned char Checksum, uint8_t Sequence )
+*  ============================================================================*/
+unsigned char getChecksum( Packet* packet ) {
+    unsigned char checksum = 0x00;
+
+    checksum = packet->Sequence;
+
+    for( int i=0; i < DATASIZE; i++ ) {
+        checksum += packet->Data[i];
+    }
+
+   checksum = ~checksum;   //invert   ff --> 00
+
+    return checksum;
 }
 
 

@@ -61,15 +61,20 @@ int main(int argc, char *argv[])
 	     	return 0;
 	 	}
 
+	 	// server address has ip and port info
 		bzero(&serverAddress, sizeof(serverAddress));
 		serverAddress.sin_family = AF_INET;
 		serverAddress.sin_port = htons(PORT);
 
+		//can't connect to ip
 		if (inet_aton(destIP.c_str(), &serverAddress.sin_addr)==0) {
 			cout << "There was a problem with the server IP address. Exiting..." << endl;
 			return 0;
 		}
 
+		/* ====================================================================
+		*	MENU: 1 to PUT file 2 to quit
+		*  ==================================================================*/
 		cout << "Enter (1) to PUT file or (2) to quit.\n\nEnter: ";
 		cin.clear();
 		cin >> in;
@@ -81,14 +86,14 @@ int main(int argc, char *argv[])
 			cout << "Enter File Name: ";
 			cin >> in;
 			
-			putFilename = "PUT " + in;
+			putFilename = "PUT " + in;  //header
 
 			cout << putFilename << endl;
 			//Now in is our filename to send
 			ifstream putfile;
 			putfile.open(in.c_str());   //open in file
-			unsigned char csum = 0x00;
-			unsigned char lost = 0x00;
+			//unsigned char csum = 0x00;
+			//unsigned char lost = 0x00;
 			char buff[DATASIZE];
 			if(putfile.is_open())  {
 			
@@ -138,6 +143,7 @@ int main(int argc, char *argv[])
 				
 				
 				}
+
 				/* ============================================================
 				* sendto - allows us to specify the destination w/out
 				* having to connect to the server first.
@@ -160,7 +166,7 @@ int main(int argc, char *argv[])
     }  //END loop forever =====================================================
 
     return 0;
-}
+} //end main
 
 
 /*=============================================================================

@@ -160,7 +160,7 @@ void getData(string filenameIN) {
 				}
 			}
 			cout << endl;
-			string buffer(data);
+			string buffer(data, recvlen - HEADERSIZE);
 
 			//copy data to file.
 			if ( seqnum != packet->Sequence ) {
